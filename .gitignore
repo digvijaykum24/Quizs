@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-demo
+publish
+
+# Local environment: copy .env.example to .env and fill in your own Supabase project
+.env
+.env.local
+*.local
+
+.DS_Store
+Thumbs.db
