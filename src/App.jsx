@@ -24,7 +24,7 @@ export default function App() {
   const [modal, setModal] = useState(null); // {type:'login'|'picker'|'category', cat?, role?, mode?, reason?, next?}
   const [unlock, setUnlock] = useState(null);
   const { user, ready, login, signup, logout, updateName, recovery, setRecovery } = useAuth();
-  const { users } = useUsers(user);
+  const { users, reload: reloadUsers } = useUsers(user);
   const { attempts, loading: attemptsLoading, addAttempt, claimGuest, guestCount } = useAttempts(user);
   const { quizzes, byId, addQuestion, removeQuestion, resetQuiz } = useQuizzes();
   const { msg, show, toast } = useToast();
@@ -106,6 +106,13 @@ export default function App() {
   const openPicker = () => setModal({ type: 'picker' });
   const openLogin = (mode = 'login', extra = {}) => setModal({ type: 'login', mode, ...extra });
   const authProps = { onLogin, onSignup, onReset };
+  const setUserRole = async (u, role) => {
+    const r = await backend.admin.setRole(u.id, role);
+    if (r.error) { toast(r.error); return r; }
+    await reloadUsers();
+    toast(role === 'admin' ? `${u.name.split(' ')[0]} is now an admin` : `${u.name.split(' ')[0]} is back to student`);
+    return r;
+  };
   const joinBoard = (mode = 'signup') => openLogin(mode, { reason: guestCount ? `Create a free account to put your name on the leaderboard. Your ${guestCount} guest score${guestCount === 1 ? '' : 's'} will be added to your profile.` : 'Create a free account to put your name on the leaderboard and keep your scores across devices.' });
 
   return (
@@ -115,7 +122,7 @@ export default function App() {
       {view === 'duel' && ready && <Duel user={user} users={users} quizzes={quizzes} byId={byId} onNav={navigate} onToast={toast} />}
       {view === 'dashboard' && ready && <Dashboard quizzes={quizzes} byId={byId} attempts={myAttempts} stats={stats} me={me} user={user} onStart={startQuiz} onJoin={joinBoard} />}
       {view === 'admin' && ready && <Admin admin={user} users={users} attempts={attempts} quizzes={quizzes} byId={byId} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={toast} onLogin={() => navigate('#login')} onNav={navigate}
-        onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} />}
+        onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} onSetRole={setUserRole} />}
       {(view === 'account' || view === 'login') && ready && (user
         ? <Account user={user} attempts={myAttempts} onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onToast={toast} onNav={navigate} onLogout={onLogout} />
         : <AuthPage initialMode="login" reason={view === 'account' ? 'Log in to change your name or password and manage your account.' : ''} onNav={navigate} {...authProps} />)}

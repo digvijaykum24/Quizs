@@ -158,3 +158,46 @@ grant select (id, code, quiz_id, q_ids, per_q_sec, host_id, guest_id, status, q_
 
 alter publication supabase_realtime add table public.duels;
 alter publication supabase_realtime add table public.duel_answers;
+
+
+-- ===================== Roles without invite codes =====================
+-- Sign-up always creates a student. The first account on a fresh install becomes
+-- the admin; after that admins promote people from Admin -> Students.
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare first_ever boolean;
+begin
+  select not exists (select 1 from public.profiles) into first_ever;
+  insert into public.profiles (id, name, color, role) values (
+    new.id,
+    coalesce(nullif(trim(new.raw_user_meta_data->>'name'), ''), split_part(new.email, '@', 1)),
+    coalesce(nullif(new.raw_user_meta_data->>'color', ''), '#4F46E5'),
+    case when first_ever then 'admin' else 'student' end);
+  return new;
+end; $$;
+
+create or replace function public.set_user_role(p_user uuid, p_role text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare admins int;
+begin
+  if not public.is_admin() then raise exception 'Only admins can change roles'; end if;
+  if p_role not in ('student','admin') then raise exception 'Unknown role'; end if;
+  if p_user = auth.uid() and p_role = 'student' then
+    raise exception 'You cannot remove your own admin access';
+  end if;
+  if p_role = 'student' then
+    select count(*) into admins from public.profiles where role = 'admin';
+    if admins <= 1 then raise exception 'This is the last admin - promote someone else first'; end if;
+  end if;
+  update public.profiles set role = p_role where id = p_user;
+  if not found then raise exception 'No such user'; end if;
+  return jsonb_build_object('id', p_user, 'role', p_role);
+end; $$;
+revoke execute on function public.set_user_role(uuid, text) from public, anon;
+grant execute on function public.set_user_role(uuid, text) to authenticated;
+
+-- The invite-code machinery is gone:
+drop function if exists public.check_admin_invite(text);
+drop function if exists public.admin_get_invite();
+drop function if exists public.set_admin_invite(text);
+drop table if exists public.app_settings;

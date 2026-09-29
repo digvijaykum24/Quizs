@@ -29,19 +29,23 @@ Accounts, quiz attempts, the public leaderboard and admin question edits live in
   RLS. To point the app at your own Supabase project, edit `.env` (or copy `.env.example`). With the
   vars empty the app falls back to browser-local storage (`src/backend/local.js`), which is what
   `npm run build:demo` produces.
-- **Auth**: one unified section for everyone (`src/components/Auth.jsx`) - students and admins log in
-  with the same form, sign up in the same card, and reset a forgotten password without leaving it.
-  It renders as a page at `#login` and as a modal for mid-flow prompts. The account's own role decides
-  where a login lands (admin -> admin panel, student -> dashboard). An account becomes an admin only by
-  entering the invite code at sign-up.
+- **Auth**: one section for everyone (`src/components/Auth.jsx`) - log in, sign up and reset a
+  forgotten password in the same card, rendered as a page at `#login` and as a modal for mid-flow
+  prompts. There is no separate admin login and the page never mentions admin: the account's own role
+  decides where a login lands (admin -> admin panel, student -> dashboard).
   Sign-up goes through the `signup` Edge Function
   (`supabase/functions/signup`), which creates the account **already confirmed** — no confirmation
   email, so Supabase's 2-emails/hour mailer limit never blocks sign-ups. A `profiles` row is created
   automatically (trigger). Signing up with **Admin** + the invite code creates an admin account.
-- **Admin invite code** lives in `app_settings`; only admins can read it (`admin_get_invite()`) or change
-  it (`set_admin_invite()`), both enforced in the database. Manage it in **Admin panel -> Settings**:
-  show/copy the current code, or hit **Generate a code** for a random `QUIZ-XXXX-XXXX` one and save.
-  Someone with the code becomes an admin by entering it at sign-up under "I have an admin invite code".
+- **Becoming an admin** - there are no invite codes. Sign-up always creates a student, and the role is
+  set in the database:
+  - the **first account on a fresh install becomes the admin** (the `handle_new_user` trigger checks
+    whether any profile exists yet);
+  - after that an admin promotes anyone from **Admin -> Students -> Make admin**, which calls
+    `set_user_role()`. That function refuses to demote you or the last remaining admin, so the site
+    can never lock itself out. Passing `role: "admin"` to the sign-up API is ignored.
+  - lost every admin? Run once in the SQL editor:
+    `update public.profiles set role='admin' where id = (select id from auth.users where email='you@example.com');`
 - **Passwords** are changed from the site: avatar menu → **Account settings** → *Change password*
   (the current password is required). Forgot it? The login form's **Forgot password?** emails a reset link.
 - What each role can do is enforced in the database, not just the UI: students can only insert their own
@@ -100,13 +104,12 @@ LOGIN / SIGN UP  ->  Supabase Auth  ->  check profiles.role (enforced by RLS)
                                                    |-- Questions   add / remove / reset per quiz
                                                    |-- Students    directory with emails and per-student detail
                                                    |-- Analytics   14-day activity, per-quiz averages, top performers
-                                                   |-- Profile     display name + change password
-                                                   \-- Settings    admin invite code, list of admins
+                                                   \-- Profile     display name + change password
 ```
 
 Analytics stands in for a shop's "revenue" board: attempts, weekly activity, active students,
-average score, participation and points awarded. Profile reuses the same two forms as the
-`#account` page, which every student still uses.
+average score, participation and points awarded. Students shows every account with **Make admin** /
+**Remove admin**. Profile reuses the same two forms as the `#account` page, which students still use.
 
 ## Live Duel (`#duel`)
 

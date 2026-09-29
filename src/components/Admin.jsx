@@ -5,7 +5,7 @@ import { NameForm, PasswordForm } from './Account.jsx';
 import { backend } from '../backend/index.js';
 
 const TABS = [['overview', '📊 Overview'], ['attempts', '📋 Attempts'], ['questions', '📝 Questions'],
-  ['students', '👥 Students'], ['analytics', '📈 Analytics'], ['profile', '👤 Profile'], ['settings', '⚙️ Settings']];
+  ['students', '👥 Students'], ['analytics', '📈 Analytics'], ['profile', '👤 Profile']];
 
 /* ---------- Overview ---------- */
 function Overview({ users, attempts, quizzes, byId }) {
@@ -156,10 +156,16 @@ function UserDetail({ user, attempts, byId, onClose }) {
   );
 }
 
-function Users({ users, attempts, byId }) {
+function Users({ users, attempts, byId, admin, onSetRole }) {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('student');
   const [sel, setSel] = useState(null);
+  const [ask, setAsk] = useState(null);     // {user, to} pending role change
+  const [busy, setBusy] = useState(null);
+  const changeRole = async () => {
+    const { user, to } = ask; setAsk(null); setBusy(user.id);
+    await onSetRole(user, to); setBusy(null);
+  };
   const rows = useMemo(() => users
     .filter(u => role === 'all' || u.role === role)
     .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
@@ -188,7 +194,17 @@ function Users({ users, attempts, byId }) {
                   <td className="num tabular">{s.n ? `${s.avg}%` : '—'}</td>
                   <td className="num tabular">{s.n ? `${s.best}%` : '—'}</td>
                   <td>{s.last ? fmtDate(s.last) : <span style={{ color: 'var(--muted)' }}>Never</span>}</td>
-                  <td><button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setSel(u); }}>View</button></td>
+                  <td>
+                    <div className="row-acts">
+                      <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setSel(u); }}>View</button>
+                      {u.id !== admin.id && (
+                        <button className={`btn btn-sm ${u.role === 'admin' ? 'btn-ghost' : 'btn-orange'}`} disabled={busy === u.id}
+                          onClick={e => { e.stopPropagation(); setAsk({ user: u, to: u.role === 'admin' ? 'student' : 'admin' }); }}>
+                          {busy === u.id ? '…' : u.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -198,78 +214,18 @@ function Users({ users, attempts, byId }) {
           : <EmptyState emoji="👥" title="No students yet" text="Accounts appear here as soon as students sign up on the site. Their quiz attempts, scores and activity will show automatically." />}
       </div>
       {sel && <UserDetail user={sel} attempts={attempts.filter(a => a.user === sel.id)} byId={byId} onClose={() => setSel(null)} />}
+      {ask && <ConfirmModal emoji={ask.to === 'admin' ? '🛡️' : '👤'}
+        title={ask.to === 'admin' ? `Make ${ask.user.name} an admin?` : `Remove ${ask.user.name}'s admin access?`}
+        text={ask.to === 'admin'
+          ? 'They will be able to add and remove questions, see every student and their email, and promote other admins. They land in the admin panel next time they log in.'
+          : 'They keep their account and scores but go back to being a normal student.'}
+        cancel="Cancel" ok={ask.to === 'admin' ? 'Make admin' : 'Remove admin'} okClass={ask.to === 'admin' ? 'btn-orange' : 'btn-primary'}
+        onOk={changeRole} onClose={() => setAsk(null)} />}
     </>
   );
 }
 
 /* ---------- Settings: invite code rotation + account shortcuts ---------- */
-/* QUIZ-XXXX-XXXX from an unambiguous alphabet (no O/0/I/1) */
-function makeCode() {
-  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const pick = n => Array.from(crypto.getRandomValues(new Uint32Array(n)), v => A[v % A.length]).join('');
-  return `QUIZ-${pick(4)}-${pick(4)}`;
-}
-
-function Settings({ admin, users, onToast, onNav }) {
-  const [code, setCode] = useState(''); const [code2, setCode2] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
-  const [current, setCurrent] = useState(null); const [show, setShow] = useState(false);
-  const admins = users.filter(u => u.role === 'admin');
-  useEffect(() => { backend.admin.getInviteCode().then(r => setCurrent(r.code || '')); }, []);
-  const generate = () => { const c = makeCode(); setCode(c); setCode2(c); setErr(''); onToast('Code generated — review it, then save'); };
-  const copy = async text => {
-    try { await navigator.clipboard.writeText(text); onToast('Invite code copied'); }
-    catch (e) { onToast(text); }
-  };
-  const submit = async e => {
-    e.preventDefault(); if (busy) return;
-    if (code.trim().length < 6) return setErr('Use at least 6 characters.');
-    if (code !== code2) return setErr('The two codes do not match.');
-    setBusy(true); const r = await backend.admin.setInviteCode(code); setBusy(false);
-    if (r.error) return setErr(r.error);
-    setCurrent(code.trim()); setCode(''); setCode2(''); setErr(''); setShow(true); onToast('Admin invite code updated');
-  };
-  return (
-    <div className="dash-grid">
-      <form className="card panel" onSubmit={submit} noValidate>
-        <h3>🔑 Admin invite code <span>Required to create new admin accounts</span></h3>
-        <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 14 }}>Share this code with anyone who should manage the site: they sign up on the normal form and enter it under “I have an admin invite code”. Rotate it whenever someone leaves the team.</p>
-        <div className="invite-now">
-          <div>
-            <span>Current code</span>
-            <b className="tabular">{current === null ? 'Loading…' : show ? (current || 'not set') : '•'.repeat(Math.max(8, (current || '').length))}</b>
-          </div>
-          <div className="invite-acts">
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShow(v => !v)}>{show ? '🙈 Hide' : '👁️ Show'}</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => copy(current)} disabled={!current}>📋 Copy</button>
-          </div>
-        </div>
-        <div className="field"><label htmlFor="invNew">New invite code</label><input id="invNew" value={code} onChange={e => { setCode(e.target.value); setErr(''); }} placeholder="Type one or generate it" autoComplete="off" /></div>
-        <div className="field"><label htmlFor="invNew2">Confirm new invite code</label><input id="invNew2" value={code2} onChange={e => { setCode2(e.target.value); setErr(''); }} autoComplete="off" /></div>
-        {err && <div className="form-err" role="alert">⚠️ {err}</div>}
-        <div className="invite-btns">
-          <button className="btn btn-orange" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Update invite code'}</button>
-          <button className="btn btn-ghost" type="button" onClick={generate}>🎲 Generate a code</button>
-        </div>
-      </form>
-      <div style={{ display: 'grid', gap: 20, alignContent: 'start' }}>
-        <div className="card panel">
-          <h3>👤 Your admin account</h3>
-          <p style={{ fontSize: 14.5, marginBottom: 12 }}><b>{admin.name}</b><br /><span style={{ color: 'var(--muted)' }}>{admin.email}</span></p>
-          <button className="btn btn-ghost" onClick={() => onNav('#account')}>⚙️ Change password or name →</button>
-        </div>
-        <div className="card panel">
-          <h3>🛡️ Admins <span>{admins.length} account{admins.length === 1 ? '' : 's'}</span></h3>
-          <div className="recent">
-            {admins.map(a => <div key={a.id} className="recent-item"><span className="avatar" style={{ background: 'var(--grad-exam)' }}>{initials(a.name)}</span><div className="info"><b>{a.name}{a.id === admin.id ? ' (you)' : ''}</b><span>{a.email || 'admin'} · since {fmtDate(a.joined)}</span></div></div>)}
-          </div>
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 12 }}>To add an admin: share the code above; they sign up on the normal form and paste it under “I have an admin invite code”.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 /* ---------- Attempts: every quiz submission, searchable and exportable ---------- */
 function Attempts({ users, attempts, byId, onToast }) {
   const [q, setQ] = useState('');
@@ -439,7 +395,7 @@ function Profile({ admin, onUpdateName, onUpdatePassword, onToast, onLogout }) {
 }
 
 /* ---------- Admin shell ---------- */
-export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav, onUpdateName, onUpdatePassword, onLogout }) {
+export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav, onUpdateName, onUpdatePassword, onLogout, onSetRole }) {
   const [tab, setTab] = useState('overview');
   if (!admin || admin.role !== 'admin') {
     return (
@@ -464,10 +420,9 @@ export default function Admin({ admin, users, attempts, quizzes, byId, addQuesti
         {tab === 'overview' && <Overview users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
         {tab === 'questions' && <Questions quizzes={quizzes} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={onToast} />}
         {tab === 'attempts' && <Attempts users={users} attempts={attempts} byId={byId} onToast={onToast} />}
-        {tab === 'students' && <Users users={users} attempts={attempts} byId={byId} />}
+        {tab === 'students' && <Users users={users} attempts={attempts} byId={byId} admin={admin} onSetRole={onSetRole} />}
         {tab === 'analytics' && <Analytics users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
         {tab === 'profile' && <Profile admin={admin} onUpdateName={onUpdateName} onUpdatePassword={onUpdatePassword} onToast={onToast} onLogout={onLogout} />}
-        {tab === 'settings' && <Settings admin={admin} users={users} onToast={onToast} onNav={onNav} />}
       </div>
     </main>
   );

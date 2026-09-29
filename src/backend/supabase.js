@@ -21,6 +21,7 @@ export function createSupabaseBackend(url, key) {
     if (m.includes('password')) return 'Password must be at least 6 characters.';
     if (m.includes('email rate limit')) return 'Sign-up is temporarily paused: the confirmation-email limit was reached. Please try again in about an hour. (Site admin: turn off "Confirm email" in Supabase Auth to allow instant sign-up.)';
     if (m.includes('rate limit') || m.includes('too many')) return 'The server is busy right now. Please wait a moment and try again.';
+    if (m.includes('permission denied') || m.includes('jwt') || m.includes('expired')) return 'Your session has expired. Please log in again.';
     return e?.message || 'Something went wrong. Please try again.';
   };
 
@@ -41,14 +42,14 @@ export function createSupabaseBackend(url, key) {
     },
     /* Sign-up goes through the `signup` Edge Function, which creates the account already confirmed
        (no confirmation email, so no mail rate limits), then we log the user in right away. */
-    async signUp({ name, email, password, role, code }) {
+    async signUp({ name, email, password }) {
       if (!name.trim()) return { error: 'Enter your name.' };
       if (password.length < 6) return { error: 'Password must be at least 6 characters.' };
       let res;
       try {
         res = await fetch(`${url}/functions/v1/signup`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key },
-          body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), password, role, code })
+          body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), password })
         });
       } catch (e) { return { error: 'Could not reach the server. Check your connection and try again.' }; }
       const out = await res.json().catch(() => ({}));
@@ -95,14 +96,11 @@ export function createSupabaseBackend(url, key) {
   };
 
   const admin = {
-    async getInviteCode() {
-      const { data, error } = await sb.rpc('admin_get_invite');
-      if (error) return { error: error.message.replace(/^.*?:\s*/, '') };
-      return { code: data };
-    },
-    async setInviteCode(code) {
-      const { error } = await sb.rpc('set_admin_invite', { new_code: code });
-      if (error) return { error: error.message.replace(/^.*?:\s*/, '') };
+    /* Promote a student to admin, or hand admin back. The database refuses to demote
+       the last admin or yourself, so the site can never be locked out. */
+    async setRole(userId, role) {
+      const { error } = await sb.rpc('set_user_role', { p_user: userId, p_role: role });
+      if (error) return { error: friendly(error) };
       return { ok: true };
     }
   };

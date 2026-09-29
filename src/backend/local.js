@@ -24,12 +24,13 @@ export function createLocalBackend() {
       if (role === 'student' && u.role === 'admin') return { error: 'This is an admin account. Switch to Admin login.' };
       write('qa_session', u.id); emit(pub(u)); return { user: pub(u) };
     },
-    async signUp({ name, email, password, role, code }) {
+    async signUp({ name, email, password }) {
       await wait();
       if (!name.trim()) return { error: 'Enter your name.' };
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(norm(email))) return { error: 'Enter a valid email address.' };
       if (password.length < 6) return { error: 'Password must be at least 6 characters.' };
       if (allUsers().some(u => u.email === norm(email))) return { error: 'An account with this email already exists.' };
+      const role = allUsers().length ? 'student' : 'admin';
       const u = { id: `u-${Date.now()}`, name: name.trim(), email: norm(email), password, role, joined: new Date().toISOString(), sub: role === 'admin' ? 'Platform admin' : 'Student', color: AV[name.trim().length % AV.length] };
       write('qa_users', [...read('qa_users', []), u]); write('qa_session', u.id); emit(pub(u));
       return { user: pub(u) };
@@ -59,17 +60,15 @@ export function createLocalBackend() {
   };
 
   const admin = {
-    async getInviteCode() {
-      const id = read('qa_session', null); const u = allUsers().find(x => x.id === id);
-      if (!u || u.role !== 'admin') return { error: 'Only admins can view the invite code.' };
-      return { code: read('qa_invite', ADMIN_INVITE_CODE) };
-    },
-    async setInviteCode(code) {
+    async setRole(userId, role) {
       await wait();
-      const id = read('qa_session', null); const u = allUsers().find(x => x.id === id);
-      if (!u || u.role !== 'admin') return { error: 'Only admins can change the invite code.' };
-      if (code.trim().length < 6) return { error: 'Invite code must be at least 6 characters.' };
-      write('qa_invite', code.trim()); return { ok: true };
+      const me = allUsers().find(x => x.id === read('qa_session', null));
+      if (!me || me.role !== 'admin') return { error: 'Only admins can change roles.' };
+      if (userId === me.id && role === 'student') return { error: 'You cannot remove your own admin access.' };
+      const extra = read('qa_users', []);
+      if (!extra.some(x => x.id === userId)) return { error: 'The built-in demo accounts cannot be changed.' };
+      write('qa_users', extra.map(x => (x.id === userId ? { ...x, role } : x)));
+      return { ok: true };
     }
   };
 

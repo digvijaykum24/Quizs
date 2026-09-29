@@ -8,8 +8,7 @@ import { Modal, ModalHead } from './ui.jsx';
 --------------------------------------------------------------------------- */
 export function AuthPanel({ initialMode = 'login', reason, onLogin, onSignup, onReset, onDone }) {
   const [mode, setMode] = useState(initialMode); // login | signup | reset
-  const [f, setF] = useState({ name: '', email: '', password: '', code: '' });
-  const [showCode, setShowCode] = useState(false);
+  const [f, setF] = useState({ name: '', email: '', password: '' });
   const [err, setErr] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
@@ -27,7 +26,7 @@ export function AuthPanel({ initialMode = 'login', reason, onLogin, onSignup, on
       const r = (reset
         ? await onReset(f.email)
         : signup
-          ? await onSignup({ ...f, role: showCode && f.code.trim() ? 'admin' : 'student' })
+          ? await onSignup(f)
           : await onLogin(f.email, f.password)) || {};
       if (r.error) setErr(r.error);
       else if (r.info) { setInfo(r.info); if (!reset) setMode('login'); }
@@ -48,7 +47,7 @@ export function AuthPanel({ initialMode = 'login', reason, onLogin, onSignup, on
 
       {reset ? (
         <form onSubmit={submit} noValidate>
-          <p className="auth-hint">Enter the email for your account — student or admin — and we'll send a link to choose a new password.</p>
+          <p className="auth-hint">Enter the email you signed up with and we'll send a link to choose a new password.</p>
           <div className="field"><label htmlFor="authEmail">Email</label><input id="authEmail" type="email" value={f.email} onChange={set('email')} placeholder="you@example.com" autoComplete="username" autoFocus /></div>
           {err && <div className="form-err" role="alert">⚠️ {err}</div>}
           {info && <div className="form-info" role="status">📬 {info}</div>}
@@ -64,10 +63,6 @@ export function AuthPanel({ initialMode = 'login', reason, onLogin, onSignup, on
             <input id="authPass" type="password" value={f.password} onChange={set('password')} placeholder="••••••••" autoComplete={signup ? 'new-password' : 'current-password'} />
           </div>
 
-          {signup && (showCode
-            ? <div className="field"><label htmlFor="authCode">Admin invite code</label><input id="authCode" value={f.code} onChange={set('code')} placeholder="Ask your site admin" autoComplete="off" autoFocus /><small className="auth-note">Leave this blank and you'll get a normal student account.</small></div>
-            : <button type="button" className="link-btn auth-code-toggle" onClick={() => setShowCode(true)}>🛡️ I have an admin invite code</button>)}
-
           {!signup && <div className="auth-forgot"><button type="button" className="link-btn" onClick={() => go('reset')}>Forgot password?</button></div>}
 
           {err && <div className="form-err" role="alert">⚠️ {err}</div>}
@@ -79,7 +74,7 @@ export function AuthPanel({ initialMode = 'login', reason, onLogin, onSignup, on
           <p className="auth-foot">
             {signup
               ? <>Already have an account? <button type="button" className="link-btn" onClick={() => go('login')}>Log in</button></>
-              : <>New here? <button type="button" className="link-btn" onClick={() => go('signup')}>Create a free account</button> · Admins log in here too.</>}
+              : <>New here? <button type="button" className="link-btn" onClick={() => go('signup')}>Create a free account</button></>}
           </p>
         </form>
       )}
@@ -102,14 +97,14 @@ export function AuthPage({ initialMode, reason, onNav, ...handlers }) {
   const points = [
     ['🏆', 'Your name on the leaderboard', 'Scores from every quiz you finish are ranked against other students.'],
     ['📊', 'Progress that follows you', 'Streaks, accuracy and badges saved to your account, on any device.'],
-    ['🛡️', 'Admins use this same form', 'Log in with your admin account and you land straight in the admin panel.']
+    ['⚡', 'Challenge a friend', 'Duels are live 1v1 rounds — you need an account to be matched with someone.']
   ];
   return (
     <main>
       <div className="container auth-page">
         <div className="auth-side">
           <h1>One account for everything</h1>
-          <p>Playing quizzes is free and needs no account. Log in only when you want to be ranked — or to manage the site as an admin.</p>
+          <p>Playing quizzes is free and needs no account. Log in when you want your scores saved and your name on the leaderboard.</p>
           <ul>
             {points.map(p => <li key={p[1]}><span aria-hidden="true">{p[0]}</span><div><b>{p[1]}</b><span>{p[2]}</span></div></li>)}
           </ul>
