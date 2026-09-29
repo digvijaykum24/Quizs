@@ -806,3 +806,41 @@ main .card{max-width:100%}
 .btn-danger{background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:0;box-shadow:0 8px 18px -8px rgba(239,68,68,.6)}
 .btn-danger:hover{filter:brightness(1.06)}
 .btn-danger:disabled{opacity:.6;cursor:default}
+
+/* ============ FORM CONTROLS ============ */
+:root{
+  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --magnifier:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    --magnifier:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+  }
+}
+:root[data-theme="dark"]{
+  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --magnifier:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+}
+.field input,.field select,.field textarea,.search,.admin-search,.admin-toolbar select{
+  width:100%;min-height:46px;padding:11px 14px;border:1.5px solid var(--line-2);border-radius:12px;
+  background-color:var(--surface);color:var(--ink);font:inherit;font-size:15px;
+  transition:border-color .2s ease,box-shadow .25s ease,background-color .2s ease,transform .18s ease,background-position .2s ease}
+.field input::placeholder,.search::placeholder,.admin-search::placeholder{color:var(--muted);opacity:1;transition:opacity .2s ease,transform .2s ease}
+.field input:hover,.field select:hover,.field textarea:hover,.search:hover,.admin-search:hover,.admin-toolbar select:hover{border-color:var(--indigo);transform:translateY(-1px)}
+.field input:focus,.field select:focus,.field textarea:focus,.search:focus,.admin-search:focus,.admin-toolbar select:focus{
+  outline:none;border-color:var(--indigo);box-shadow:0 0 0 4px rgba(79,70,229,.16);transform:none;animation:ctrlFocus .34s ease-out}
+.field input:focus::placeholder,.search:focus::placeholder,.admin-search:focus::placeholder{opacity:.55;transform:translateX(3px)}
+.field:focus-within label{color:var(--indigo);transition:color .2s ease}
+@keyframes ctrlFocus{0%{box-shadow:0 0 0 0 rgba(79,70,229,.36)}100%{box-shadow:0 0 0 4px rgba(79,70,229,.16)}}
+.field select,.admin-toolbar select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;padding-right:42px;
+  background-image:var(--chevron);background-repeat:no-repeat;background-position:right 14px center;background-size:18px}
+.field select:focus,.admin-toolbar select:focus{background-position:right 12px center}
+.field select option,.admin-toolbar select option{background:var(--surface);color:var(--ink)}
+.admin-search,.search{padding-left:42px;background-image:var(--magnifier);background-repeat:no-repeat;background-position:left 14px center;background-size:18px}
+@media (prefers-reduced-motion:reduce){
+  .field input,.field select,.field textarea,.search,.admin-search,.admin-toolbar select{transition:none;animation:none}
+  .field input:hover,.field select:hover,.field textarea:hover,.search:hover,.admin-search:hover,.admin-toolbar select:hover{transform:none}
+  .field input:focus,.field select:focus,.field textarea:focus,.search:focus,.admin-search:focus,.admin-toolbar select:focus{animation:none}
+}
