@@ -37,10 +37,12 @@ export default function App() {
 
   /* ---- navigation: one handler for navbar, mobile menu, bottom nav and footer ---- */
   const navigate = useCallback(href => {
-    const page = PAGES[href];
+    let page = PAGES[href];
+    if (page === 'dashboard' && user?.role === 'admin') { page = 'admin'; href = '#admin'; }
     if (page) { setView(page); setActive(href); window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); history.replaceState(null, '', href); return; }
     if (view === 'home') jump(href); else { pendingJump.current = href; setView('home'); }
-  }, [view, jump, setActive]);
+  }, [view, jump, setActive, user]);
+  useEffect(() => { if (view === 'dashboard' && user?.role === 'admin') navigate('#admin'); }, [view, user, navigate]);
   useEffect(() => {
     if (view === 'home' && pendingJump.current) { const h = pendingJump.current; pendingJump.current = null; requestAnimationFrame(() => jump(h)); }
     if (PAGES['#' + view]) setActive('#' + view);

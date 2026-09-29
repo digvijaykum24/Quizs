@@ -15,7 +15,7 @@ function NavLink({ href, active, onNav, className = '', children }) {
 export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
   const links = user
     ? (user.role === 'admin'
-        ? [...LINKS, ['#dashboard', 'Dashboard', '📊'], ['#admin', 'Admin', '🛡️']]
+        ? [...LINKS, ['#admin', 'Admin', '🛡️']]
         : [...LINKS, ['#dashboard', 'Dashboard', '📊']])
     : LINKS;
   const [open, setOpen] = useState(false);
@@ -55,7 +55,7 @@ export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
 
 export function BottomNav({ active, onNav, user }) {
   const items = [['#top', 'Home', <Icon.Home />], ['#quizzes', 'Quizzes', <Icon.Target />], ['#duel', 'Duel', <span className="bn-emoji" aria-hidden="true">⚔️</span>], ['#leaderboard', 'Board', <Icon.Trophy />]];
-  if (user) items.push(['#dashboard', 'Dashboard', <Icon.Chart />]);
+  if (user) items.push(user.role === 'admin' ? ['#admin', 'Admin', <Icon.Chart />] : ['#dashboard', 'Dashboard', <Icon.Chart />]);
   return (
     <nav className="bottom-nav" aria-label="Mobile">
       {items.map(([h, l, ic]) => <NavLink key={h} href={h} active={active} onNav={onNav}>{ic}{l}</NavLink>)}

@@ -121,7 +121,7 @@ export default function Result({ result: r, user, onRetry, onNext, onNav, onToas
             })}
           </div>
         )}
-        <div style={{ textAlign: 'center', marginTop: 28 }}><a className="btn btn-ghost" href="#dashboard" onClick={e => { e.preventDefault(); onNav('#dashboard'); }}>📊 Go to Dashboard</a></div>
+        <div style={{ textAlign: 'center', marginTop: 28 }}><a className="btn btn-ghost" href="#dashboard" onClick={e => { e.preventDefault(); onNav('#dashboard'); }}>{user?.role === 'admin' ? '🛡️ Go to Admin panel' : '📊 Go to Dashboard'}</a></div>
       </div>
     </main>
   );
