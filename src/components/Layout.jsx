@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Brand, Icon, UserChip } from './ui.jsx';
 
+/* Public links. Dashboard is added only once someone is logged in, and Admin only for admins. */
 const LINKS = [
   ['#top', 'Home', '🏠'], ['#quizzes', 'Quizzes', '🎯'], ['#duel', 'Duel', '⚔️'], ['#categories', 'Categories', '📚'],
-  ['#leaderboard', 'Leaderboard', '🏆'], ['#dashboard', 'Dashboard', '📊']
+  ['#leaderboard', 'Leaderboard', '🏆']
 ];
 
 /* NavLink: every nav element goes through onNav so section scrolling / page switching is handled in one place */
@@ -12,7 +13,11 @@ function NavLink({ href, active, onNav, className = '', children }) {
 }
 
 export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
-  const links = user?.role === 'admin' ? [...LINKS, ['#admin', 'Admin', '🛡️']] : LINKS;
+  const links = user
+    ? (user.role === 'admin'
+        ? [...LINKS, ['#dashboard', 'Dashboard', '📊'], ['#admin', 'Admin', '🛡️']]
+        : [...LINKS, ['#dashboard', 'Dashboard', '📊']])
+    : LINKS;
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -48,8 +53,9 @@ export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
   );
 }
 
-export function BottomNav({ active, onNav }) {
-  const items = [['#top', 'Home', <Icon.Home />], ['#quizzes', 'Quizzes', <Icon.Target />], ['#duel', 'Duel', <span className="bn-emoji" aria-hidden="true">⚔️</span>], ['#leaderboard', 'Board', <Icon.Trophy />], ['#dashboard', 'Dashboard', <Icon.Chart />]];
+export function BottomNav({ active, onNav, user }) {
+  const items = [['#top', 'Home', <Icon.Home />], ['#quizzes', 'Quizzes', <Icon.Target />], ['#duel', 'Duel', <span className="bn-emoji" aria-hidden="true">⚔️</span>], ['#leaderboard', 'Board', <Icon.Trophy />]];
+  if (user) items.push(['#dashboard', 'Dashboard', <Icon.Chart />]);
   return (
     <nav className="bottom-nav" aria-label="Mobile">
       {items.map(([h, l, ic]) => <NavLink key={h} href={h} active={active} onNav={onNav}>{ic}{l}</NavLink>)}

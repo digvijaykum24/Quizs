@@ -134,7 +134,7 @@ export default function App() {
       {view === 'result' && result && <Result result={result} user={user} onRetry={() => startQuiz(result.quiz.id)} onNext={nextQuiz} onNav={navigate} onToast={toast} onJoin={joinBoard} />}
       {inQuiz && quiz && <Quiz key={`${quiz.id}-${attempts.length}`} quiz={quiz} onExit={exitQuiz} onFinish={finishQuiz} />}
       {!inQuiz && <Footer onNav={navigate} live={isLive} />}
-      {!inQuiz && <BottomNav active={active} onNav={navigate} />}
+      {!inQuiz && <BottomNav active={active} onNav={navigate} user={user} />}
 
       {modal?.type === 'login' && <AuthModal initialMode={modal.mode} reason={modal.reason} onClose={() => setModal(null)} {...authProps} />}
       {recovery && <SetPasswordModal onSubmit={onSetPassword} onClose={() => setRecovery(false)} />}

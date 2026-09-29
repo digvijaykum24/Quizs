@@ -11,11 +11,21 @@ npm run build      # production build in dist/ (uses Supabase, from .env)
 npm run build:demo # offline demo build in dist-demo/ (browser-local storage, no backend)
 ```
 
-## Deploy (static hosting)
+## Deploy
 
-`npm run build` produces a static site in `dist/`. Upload that folder to any static host
-(Netlify, Vercel, GitHub Pages, Cloudflare Pages, Hostinger, cPanel…). `vite.config.js` uses
-`base: './'` so it works from a sub-folder too.
+### GitHub Pages (automatic, already wired)
+`.github/workflows/deploy.yml` builds and publishes the site on every push to `main`.
+Enable it once: **repo Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"**.
+The site then lives at `https://<user>.github.io/<repo>/`, and every later push redeploys it.
+The workflow also copies `index.html` to `404.html` so deep links survive a refresh.
+
+Afterwards, set that URL as **Site URL** in Supabase (Authentication -> URL Configuration) so
+password-reset links come back to the live site.
+
+### Any other static host
+`npm run build` produces a static site in `dist/`. Upload that folder to Netlify, Vercel,
+Cloudflare Pages, Hostinger, cPanel or anything else. `vite.config.js` uses `base: './'`,
+so it works from a sub-folder too.
 
 ## Backend: Supabase
 
