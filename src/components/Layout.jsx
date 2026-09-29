@@ -34,7 +34,7 @@ export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
             {links.map(([h, l]) => <NavLink key={h} href={h} active={active} onNav={nav}>{l}</NavLink>)}
           </nav>
           <div className="nav-actions">
-            {user ? <UserChip user={user} onNav={nav} onLogout={onLogout} /> : <button className="btn btn-ghost" onClick={onLogin}>Login / Sign Up</button>}
+            {user ? <UserChip user={user} onNav={nav} onLogout={onLogout} /> : <button className="btn btn-ghost btn-login" onClick={onLogin}><span className="btn-ico"><Icon.User /></span>Login / Sign Up</button>}
             <button className="btn btn-primary" onClick={onPick}>▶ Start Quiz</button>
           </div>
           <button className="icon-btn nav-toggle" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(o => !o)}><Icon.Menu /></button>
@@ -46,7 +46,7 @@ export function Navbar({ active, onNav, onLogin, onPick, user, onLogout }) {
           {user && <div className="mm-user"><span className="avatar" style={{ background: user.role === 'admin' ? 'var(--grad-exam)' : user.color }}>{user.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</span><div><b>{user.name}</b><span>{user.email}</span></div></div>}
           <button className="btn btn-primary btn-lg" onClick={() => { setOpen(false); onPick(); }}>▶ Start Quiz</button>
           {user && <button className="btn btn-ghost" onClick={() => nav('#account')}>⚙️ Account settings</button>}
-          {user ? <button className="btn btn-ghost" onClick={() => { setOpen(false); onLogout(); }}>🚪 Log out</button> : <button className="btn btn-ghost" onClick={() => { setOpen(false); onLogin(); }}>Login / Sign Up</button>}
+          {user ? <button className="btn btn-ghost" onClick={() => { setOpen(false); onLogout(); }}>🚪 Log out</button> : <button className="btn btn-ghost btn-login" onClick={() => { setOpen(false); onLogin(); }}><span className="btn-ico"><Icon.User /></span>Login / Sign Up</button>}
         </div>
       </div>
     </>

@@ -844,3 +844,10 @@ main .card{max-width:100%}
   .field input:hover,.field select:hover,.field textarea:hover,.search:hover,.admin-search:hover,.admin-toolbar select:hover{transform:none}
   .field input:focus,.field select:focus,.field textarea:focus,.search:focus,.admin-search:focus,.admin-toolbar select:focus{animation:none}
 }
+
+/* Login / Sign Up button icon */
+.btn-login{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-login .btn-ico{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;flex:none;transition:transform .25s ease}
+.btn-login .btn-ico svg{width:13px;height:13px}
+.btn-login:hover .btn-ico{transform:scale(1.12) rotate(-6deg)}
+@media (prefers-reduced-motion:reduce){.btn-login:hover .btn-ico{transform:none}}
