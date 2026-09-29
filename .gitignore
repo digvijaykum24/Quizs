@@ -3,8 +3,9 @@ dist
 dist-demo
 publish
 
-# Local environment: copy .env.example to .env and fill in your own Supabase project
-.env
+# .env is committed on purpose: it holds only the Supabase project URL and the
+# publishable key, which ship to every browser anyway and are guarded by RLS.
+# Personal overrides stay local:
 .env.local
 *.local
 

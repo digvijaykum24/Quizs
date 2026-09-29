@@ -5,7 +5,6 @@ Gamified quiz / mock-test platform — React 18 + Vite, with Supabase for authen
 ## Run locally
 
 ```bash
-cp .env.example .env   # then paste your Supabase URL + publishable key
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/ (uses Supabase, from .env)
@@ -23,10 +22,13 @@ npm run build:demo # offline demo build in dist-demo/ (browser-local storage, no
 Accounts, quiz attempts, the public leaderboard and admin question edits live in Supabase
 (project **Quizs Project**, region `ap-south-1`). Schema + row-level-security policies: `supabase/schema.sql`.
 
-- `.env` (not committed — copy `.env.example` and fill it in) holds `VITE_SUPABASE_URL` /
-  `VITE_SUPABASE_ANON_KEY`. The publishable key is safe to ship to browsers — the database enforces
-  access with RLS. Without these vars the app falls back to browser-local storage
-  (`src/backend/local.js`), which is what `npm run build:demo` produces.
+- `.env` holds `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` and **is committed on purpose**, so a
+  clone of this repo talks to the live backend with no setup. Both values are public by design: Vite
+  inlines them into the bundle every visitor downloads, and row-level security in the database is what
+  actually protects the data. Never add the `service_role` key or the database password — those bypass
+  RLS. To point the app at your own Supabase project, edit `.env` (or copy `.env.example`). With the
+  vars empty the app falls back to browser-local storage (`src/backend/local.js`), which is what
+  `npm run build:demo` produces.
 - **Auth**: one unified section for everyone (`src/components/Auth.jsx`) - students and admins log in
   with the same form, sign up in the same card, and reset a forgotten password without leaving it.
   It renders as a page at `#login` and as a modal for mid-flow prompts. The account's own role decides
