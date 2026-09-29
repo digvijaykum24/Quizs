@@ -124,8 +124,9 @@ Students tables become one labelled card per row (no sideways scrolling to read 
 stack, and the KPI grids drop to two columns. Desktop keeps the real tables.
 
 Analytics stands in for a shop's "revenue" board: attempts, weekly activity, active students,
-average score, participation and points awarded. Students shows every account with **Make admin** /
-**Remove admin**. Profile reuses the same two forms as the `#account` page, which students still use.
+average score, participation and points awarded. Students shows every account with **Make admin** / **Remove admin** and a **Delete** button that
+removes the account along with its attempts and duels. The database refuses to delete your own
+account or the last remaining admin, and refuses the call entirely for non-admins. Profile reuses the same two forms as the `#account` page, which students still use.
 
 ## Live Duel (`#duel`)
 

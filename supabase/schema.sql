@@ -201,3 +201,23 @@ drop function if exists public.check_admin_invite(text);
 drop function if exists public.admin_get_invite();
 drop function if exists public.set_admin_invite(text);
 drop table if exists public.app_settings;
+
+-- Admin removes an account (cascades to profile, attempts and duels).
+-- Cannot delete yourself, and cannot delete the last admin.
+create or replace function public.admin_delete_user(p_user uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare target public.profiles; admins int;
+begin
+  if not public.is_admin() then raise exception 'Only admins can remove accounts'; end if;
+  if p_user = auth.uid() then raise exception 'You cannot delete your own account'; end if;
+  select * into target from public.profiles where id = p_user;
+  if target.id is null then raise exception 'No such user'; end if;
+  if target.role = 'admin' then
+    select count(*) into admins from public.profiles where role = 'admin';
+    if admins <= 1 then raise exception 'This is the last admin - promote someone else first'; end if;
+  end if;
+  delete from auth.users where id = p_user;
+  return jsonb_build_object('id', p_user, 'name', target.name, 'deleted', true);
+end; $$;
+revoke execute on function public.admin_delete_user(uuid) from public, anon;
+grant execute on function public.admin_delete_user(uuid) to authenticated;

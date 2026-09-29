@@ -69,6 +69,17 @@ export function createLocalBackend() {
       if (!extra.some(x => x.id === userId)) return { error: 'The built-in demo accounts cannot be changed.' };
       write('qa_users', extra.map(x => (x.id === userId ? { ...x, role } : x)));
       return { ok: true };
+    },
+    async deleteUser(userId) {
+      await wait();
+      const me = allUsers().find(x => x.id === read('qa_session', null));
+      if (!me || me.role !== 'admin') return { error: 'Only admins can remove accounts.' };
+      if (userId === me.id) return { error: 'You cannot delete your own account.' };
+      const extra = read('qa_users', []);
+      if (!extra.some(x => x.id === userId)) return { error: 'The built-in demo accounts cannot be removed.' };
+      write('qa_users', extra.filter(x => x.id !== userId));
+      write('qa_attempts', read('qa_attempts', []).filter(a => a.user !== userId));
+      return { ok: true };
     }
   };
 

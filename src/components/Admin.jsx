@@ -156,7 +156,7 @@ function UserDetail({ user, attempts, byId, onClose }) {
   );
 }
 
-function Users({ users, attempts, byId, admin, onSetRole }) {
+function Users({ users, attempts, byId, admin, onSetRole, onDeleteUser }) {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('student');
   const [sel, setSel] = useState(null);
@@ -165,6 +165,11 @@ function Users({ users, attempts, byId, admin, onSetRole }) {
   const changeRole = async () => {
     const { user, to } = ask; setAsk(null); setBusy(user.id);
     await onSetRole(user, to); setBusy(null);
+  };
+  const [del, setDel] = useState(null);      // account pending removal
+  const removeUser = async () => {
+    const u = del; setDel(null); setBusy(u.id);
+    await onDeleteUser(u); setBusy(null); setSel(null);
   };
   const rows = useMemo(() => users
     .filter(u => role === 'all' || u.role === role)
@@ -198,10 +203,14 @@ function Users({ users, attempts, byId, admin, onSetRole }) {
                     <div className="row-acts">
                       <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setSel(u); }}>View</button>
                       {u.id !== admin.id && (
-                        <button className={`btn btn-sm ${u.role === 'admin' ? 'btn-ghost' : 'btn-orange'}`} disabled={busy === u.id}
-                          onClick={e => { e.stopPropagation(); setAsk({ user: u, to: u.role === 'admin' ? 'student' : 'admin' }); }}>
-                          {busy === u.id ? '…' : u.role === 'admin' ? 'Remove admin' : 'Make admin'}
-                        </button>
+                        <>
+                          <button className={`btn btn-sm ${u.role === 'admin' ? 'btn-ghost' : 'btn-orange'}`} disabled={busy === u.id}
+                            onClick={e => { e.stopPropagation(); setAsk({ user: u, to: u.role === 'admin' ? 'student' : 'admin' }); }}>
+                            {busy === u.id ? '…' : u.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                          </button>
+                          <button className="btn btn-sm btn-danger" disabled={busy === u.id}
+                            onClick={e => { e.stopPropagation(); setDel(u); }}>Delete</button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -214,6 +223,9 @@ function Users({ users, attempts, byId, admin, onSetRole }) {
           : <EmptyState emoji="👥" title="No students yet" text="Accounts appear here as soon as students sign up on the site. Their quiz attempts, scores and activity will show automatically." />}
       </div>
       {sel && <UserDetail user={sel} attempts={attempts.filter(a => a.user === sel.id)} byId={byId} onClose={() => setSel(null)} />}
+      {del && <ConfirmModal emoji="🗑️" title={`Remove ${del.name}?`}
+        text={`This deletes the account for ${del.email} along with every quiz attempt and duel it owns, and takes them off the leaderboard. This cannot be undone.`}
+        cancel="Keep account" ok="Delete permanently" okClass="btn-danger" onOk={removeUser} onClose={() => setDel(null)} />}
       {ask && <ConfirmModal emoji={ask.to === 'admin' ? '🛡️' : '👤'}
         title={ask.to === 'admin' ? `Make ${ask.user.name} an admin?` : `Remove ${ask.user.name}'s admin access?`}
         text={ask.to === 'admin'
@@ -395,7 +407,7 @@ function Profile({ admin, onUpdateName, onUpdatePassword, onToast, onLogout }) {
 }
 
 /* ---------- Admin shell ---------- */
-export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav, onUpdateName, onUpdatePassword, onLogout, onSetRole }) {
+export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav, onUpdateName, onUpdatePassword, onLogout, onSetRole, onDeleteUser }) {
   const [tab, setTab] = useState('overview');
   if (!admin || admin.role !== 'admin') {
     return (
@@ -420,7 +432,7 @@ export default function Admin({ admin, users, attempts, quizzes, byId, addQuesti
         {tab === 'overview' && <Overview users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
         {tab === 'questions' && <Questions quizzes={quizzes} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={onToast} />}
         {tab === 'attempts' && <Attempts users={users} attempts={attempts} byId={byId} onToast={onToast} />}
-        {tab === 'students' && <Users users={users} attempts={attempts} byId={byId} admin={admin} onSetRole={onSetRole} />}
+        {tab === 'students' && <Users users={users} attempts={attempts} byId={byId} admin={admin} onSetRole={onSetRole} onDeleteUser={onDeleteUser} />}
         {tab === 'analytics' && <Analytics users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
         {tab === 'profile' && <Profile admin={admin} onUpdateName={onUpdateName} onUpdatePassword={onUpdatePassword} onToast={onToast} onLogout={onLogout} />}
       </div>

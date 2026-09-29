@@ -25,7 +25,7 @@ export default function App() {
   const [unlock, setUnlock] = useState(null);
   const { user, ready, login, signup, logout, updateName, recovery, setRecovery } = useAuth();
   const { users, reload: reloadUsers } = useUsers(user);
-  const { attempts, loading: attemptsLoading, addAttempt, claimGuest, guestCount } = useAttempts(user);
+  const { attempts, loading: attemptsLoading, addAttempt, claimGuest, guestCount, reload: reloadAttempts } = useAttempts(user);
   const { quizzes, byId, addQuestion, removeQuestion, resetQuiz } = useQuizzes();
   const { msg, show, toast } = useToast();
   const { active, setActive, jump } = useScrollSpy(view === 'home', SECTIONS);
@@ -106,6 +106,13 @@ export default function App() {
   const openPicker = () => setModal({ type: 'picker' });
   const openLogin = (mode = 'login', extra = {}) => setModal({ type: 'login', mode, ...extra });
   const authProps = { onLogin, onSignup, onReset };
+  const deleteUser = async u => {
+    const r = await backend.admin.deleteUser(u.id);
+    if (r.error) { toast(r.error); return r; }
+    await Promise.all([reloadUsers(), reloadAttempts()]);
+    toast(`${u.name} and their scores were removed`);
+    return r;
+  };
   const setUserRole = async (u, role) => {
     const r = await backend.admin.setRole(u.id, role);
     if (r.error) { toast(r.error); return r; }
@@ -127,7 +134,7 @@ export default function App() {
             : 'Log in to track your scores, streaks and badges. Playing quizzes stays free without an account.'}
             onNav={navigate} {...authProps} />)}
       {view === 'admin' && ready && <Admin admin={user} users={users} attempts={attempts} quizzes={quizzes} byId={byId} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={toast} onLogin={() => navigate('#login')} onNav={navigate}
-        onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} onSetRole={setUserRole} />}
+        onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} onSetRole={setUserRole} onDeleteUser={deleteUser} />}
       {(view === 'account' || view === 'login') && ready && (user
         ? <Account user={user} attempts={myAttempts} onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onToast={toast} onNav={navigate} onLogout={onLogout} />
         : <AuthPage initialMode="login" reason={view === 'account' ? 'Log in to change your name or password and manage your account.' : ''} onNav={navigate} {...authProps} />)}

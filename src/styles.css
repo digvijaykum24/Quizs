@@ -801,3 +801,8 @@ main .card{max-width:100%}
 .mini-stat{min-width:0}
 .mini-stat div{min-width:0}
 .mini-stat b,.mini-stat span{overflow-wrap:anywhere}
+
+/* Destructive action (delete account) */
+.btn-danger{background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:0;box-shadow:0 8px 18px -8px rgba(239,68,68,.6)}
+.btn-danger:hover{filter:brightness(1.06)}
+.btn-danger:disabled{opacity:.6;cursor:default}

@@ -102,6 +102,12 @@ export function createSupabaseBackend(url, key) {
       const { error } = await sb.rpc('set_user_role', { p_user: userId, p_role: role });
       if (error) return { error: friendly(error) };
       return { ok: true };
+    },
+    /* Removes the account and, by cascade, its attempts and duels */
+    async deleteUser(userId) {
+      const { error } = await sb.rpc('admin_delete_user', { p_user: userId });
+      if (error) return { error: friendly(error) };
+      return { ok: true };
     }
   };
 
