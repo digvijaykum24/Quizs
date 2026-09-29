@@ -120,7 +120,12 @@ export default function App() {
       {!inQuiz && <Navbar active={active} onNav={navigate} onLogin={() => navigate('#login')} onPick={openPicker} user={user} onLogout={onLogout} />}
       {view === 'home' && <Home quizzes={quizzes} byId={byId} attempts={myAttempts} allAttempts={attempts} attemptsLoading={attemptsLoading} users={users} stats={stats} me={me} user={user} guestCount={guestCount} onStart={startQuiz} onPick={openPicker} onNav={navigate} onExplore={explore} onLogin={() => navigate('#login')} onJoin={joinBoard} />}
       {view === 'duel' && ready && <Duel user={user} users={users} quizzes={quizzes} byId={byId} onNav={navigate} onToast={toast} />}
-      {view === 'dashboard' && ready && <Dashboard quizzes={quizzes} byId={byId} attempts={myAttempts} stats={stats} me={me} user={user} onStart={startQuiz} onJoin={joinBoard} />}
+      {view === 'dashboard' && ready && (user
+        ? <Dashboard quizzes={quizzes} byId={byId} attempts={myAttempts} stats={stats} me={me} user={user} onStart={startQuiz} />
+        : <AuthPage initialMode="login" reason={guestCount
+            ? `Log in to see your dashboard. The ${guestCount} score${guestCount === 1 ? '' : 's'} you played in this browser will be added to your profile.`
+            : 'Log in to track your scores, streaks and badges. Playing quizzes stays free without an account.'}
+            onNav={navigate} {...authProps} />)}
       {view === 'admin' && ready && <Admin admin={user} users={users} attempts={attempts} quizzes={quizzes} byId={byId} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={toast} onLogin={() => navigate('#login')} onNav={navigate}
         onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} onSetRole={setUserRole} />}
       {(view === 'account' || view === 'login') && ready && (user

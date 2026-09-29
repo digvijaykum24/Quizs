@@ -77,7 +77,7 @@ src/
    ├─ Home.jsx           Hero, quiz cards, categories, public leaderboard, how it works
    ├─ Quiz.jsx           timed quiz engine
    ├─ Result.jsx         score ring, confetti, answer review, share
-   ├─ Dashboard.jsx      student dashboard (works for guests too, with a sign-up nudge)
+   ├─ Dashboard.jsx      student dashboard (login required)
    ├─ Admin.jsx          admin panel: overview, attempts, questions, students, analytics, profile, settings
    ├─ Account.jsx        account settings: display name, change password, log out
    ├─ Auth.jsx           unified log in / sign up / forgot password (page + modal)
@@ -89,7 +89,9 @@ supabase/schema.sql      database schema, trigger, RLS policies, duel tables + f
 Leaderboard scoring: 10 points per correct answer, +50 when a quiz is finished in under half its time limit.
 Anyone can play as a guest — no account needed. Guest scores stay in that browser (`qa_guest_attempts`)
 and are not ranked. When a guest signs up or logs in, their guest scores are uploaded to the account
-automatically, so the leaderboard only ever shows real accounts.
+automatically, so the leaderboard only ever shows real accounts. The dashboard itself needs an account:
+a guest opening `#dashboard` gets the login page, which says how many browser-held scores will be
+carried over.
 
 ## Admin Dashboard (`#admin`)
 

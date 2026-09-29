@@ -35,7 +35,7 @@ function ProgressChart({ list, byId }) {
   return <div className="chart-wrap"><canvas ref={ref} /></div>;
 }
 
-export default function Dashboard({ quizzes, byId, attempts, stats, me, user, onStart, onJoin }) {
+export default function Dashboard({ quizzes, byId, attempts, stats, me, user, onStart }) {
   const subjects = useMemo(() => {
     const subs = {};
     attempts.forEach(a => { const q = byId(a.quiz); if (q) (subs[q.cat] = subs[q.cat] || []).push((a.score / a.total) * 100); });
@@ -58,9 +58,8 @@ export default function Dashboard({ quizzes, byId, attempts, stats, me, user, on
         <div className="card dash-hero">
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', opacity: 0.85 }}>{user?.role === 'admin' ? 'Admin · personal dashboard' : 'Student Dashboard'}</div>
-            <h1>{user ? `Welcome back, ${me.name.split(' ')[0]}! 👋` : 'Your guest dashboard 👋'}</h1>
+            <h1>Welcome back, {me.name.split(' ')[0]}! 👋</h1>
             <p>{attempts.length ? `You've completed ${attempts.length} quiz${attempts.length === 1 ? '' : 'zes'} with an average of ${Math.round(stats.avg)}%. Keep the streak alive.` : 'No quizzes yet — play your first one to start tracking progress.'}</p>
-            {!user && <p style={{ marginTop: 10, fontSize: 13.5, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}><span>Scores here stay in this browser and are not on the leaderboard.</span><button className="btn btn-white btn-sm" onClick={() => onJoin('signup')}>Sign up to join the leaderboard</button></p>}
           </div>
           <div className="streak"><span className="fire">🔥</span><div><span>{stats.streak} Day Streak</span><small>Best: {stats.bestStreak} day{stats.bestStreak === 1 ? '' : 's'}</small></div></div>
         </div>
