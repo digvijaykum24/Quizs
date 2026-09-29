@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fmtDate, fmtLong, initials, LETTERS, pctOf, userSummary } from '../utils.js';
 import { ConfirmModal, EmptyState, Modal, ModalHead } from './ui.jsx';
+import { NameForm, PasswordForm } from './Account.jsx';
 import { backend } from '../backend/index.js';
 
-const TABS = [['overview', '📊 Overview'], ['questions', '📝 Questions'], ['users', '👥 Users'], ['settings', '⚙️ Settings']];
+const TABS = [['overview', '📊 Overview'], ['attempts', '📋 Attempts'], ['questions', '📝 Questions'],
+  ['students', '👥 Students'], ['analytics', '📈 Analytics'], ['profile', '👤 Profile'], ['settings', '⚙️ Settings']];
 
 /* ---------- Overview ---------- */
 function Overview({ users, attempts, quizzes, byId }) {
@@ -267,8 +269,177 @@ function Settings({ admin, users, onToast, onNav }) {
   );
 }
 
+
+/* ---------- Attempts: every quiz submission, searchable and exportable ---------- */
+function Attempts({ users, attempts, byId, onToast }) {
+  const [q, setQ] = useState('');
+  const [quizFilter, setQuizFilter] = useState('all');
+  const [limit, setLimit] = useState(25);
+  const nameOf = id => users.find(u => u.id === id)?.name || 'Guest';
+
+  const rows = useMemo(() => attempts
+    .filter(a => quizFilter === 'all' || a.quiz === quizFilter)
+    .filter(a => {
+      if (!q.trim()) return true;
+      const t = q.trim().toLowerCase();
+      return nameOf(a.user).toLowerCase().includes(t) || (byId(a.quiz)?.title || a.quiz).toLowerCase().includes(t);
+    })
+    .sort((x, y) => new Date(y.date) - new Date(x.date)), [attempts, q, quizFilter, users]);
+
+  const quizzesSeen = [...new Set(attempts.map(a => a.quiz))];
+  const exportCsv = () => {
+    const head = ['Student', 'Quiz', 'Score', 'Total', 'Percent', 'Points', 'Time (s)', 'Date'];
+    const body = rows.map(a => [nameOf(a.user), byId(a.quiz)?.title || a.quiz, a.score, a.total, pctOf(a), a.points ?? '', a.time ?? '', new Date(a.date).toISOString()]);
+    const csv = [head, ...body].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `quizarena-attempts-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    onToast(`Exported ${rows.length} attempt${rows.length === 1 ? '' : 's'}`);
+  };
+
+  return (
+    <div className="card panel">
+      <h3>📋 Attempts <span>{rows.length} of {attempts.length} shown</span></h3>
+      <div className="admin-toolbar">
+        <input className="admin-search" value={q} onChange={e => { setQ(e.target.value); setLimit(25); }} placeholder="Search student or quiz…" aria-label="Search attempts" />
+        <select value={quizFilter} onChange={e => { setQuizFilter(e.target.value); setLimit(25); }} aria-label="Filter by quiz">
+          <option value="all">All quizzes</option>
+          {quizzesSeen.map(id => <option key={id} value={id}>{byId(id)?.title || id}</option>)}
+        </select>
+        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!rows.length}>⬇️ Export CSV</button>
+      </div>
+      {rows.length ? (
+        <>
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead><tr><th>Student</th><th>Quiz</th><th>Score</th><th>%</th><th>Points</th><th>When</th></tr></thead>
+              <tbody>
+                {rows.slice(0, limit).map(a => (
+                  <tr key={a.id}>
+                    <td>{nameOf(a.user)}</td>
+                    <td>{byId(a.quiz)?.title || a.quiz}</td>
+                    <td className="tabular">{a.score}/{a.total}</td>
+                    <td><span className={`chip ${pctOf(a) >= 80 ? 'easy' : pctOf(a) >= 50 ? 'mixed' : 'hard'}`}>{pctOf(a)}%</span></td>
+                    <td className="tabular">{a.points ?? '—'}</td>
+                    <td>{fmtDate(a.date)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {rows.length > limit && <button className="btn btn-ghost btn-sm" style={{ marginTop: 12 }} onClick={() => setLimit(l => l + 50)}>Show more ({rows.length - limit} left)</button>}
+        </>
+      ) : <EmptyState emoji="📭" title="No attempts match" text="Try a different search, or clear the quiz filter." />}
+    </div>
+  );
+}
+
+/* ---------- Analytics: engagement in place of a shop's revenue ---------- */
+function Analytics({ users, attempts, quizzes, byId }) {
+  const now = Date.now(), DAY = 86400000;
+  const days = [...Array(14)].map((_, i) => {
+    const d = new Date(now - (13 - i) * DAY);
+    const key = d.toISOString().slice(0, 10);
+    return { key, label: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), n: attempts.filter(a => a.date.slice(0, 10) === key).length };
+  });
+  const peak = Math.max(1, ...days.map(d => d.n));
+  const within = ms => attempts.filter(a => now - new Date(a.date).getTime() < ms);
+  const active7 = new Set(within(7 * DAY).map(a => a.user)).size;
+  const avgScore = attempts.length ? Math.round(attempts.reduce((s, a) => s + pctOf(a), 0) / attempts.length) : 0;
+  const students = users.filter(u => u.role !== 'admin');
+  const engaged = students.filter(u => attempts.some(a => a.user === u.id)).length;
+
+  const perQuiz = quizzes.map(qz => {
+    const mine = attempts.filter(a => a.quiz === qz.id);
+    return { id: qz.id, title: qz.title, icon: qz.icon, n: mine.length,
+      avg: mine.length ? Math.round(mine.reduce((s, a) => s + pctOf(a), 0) / mine.length) : 0 };
+  }).sort((a, b) => b.n - a.n);
+  const busiest = Math.max(1, ...perQuiz.map(q => q.n));
+
+  const top = students.map(u => {
+    const mine = attempts.filter(a => a.user === u.id);
+    return { ...u, n: mine.length, pts: mine.reduce((s, a) => s + (a.points || 0), 0) };
+  }).filter(u => u.n).sort((a, b) => b.pts - a.pts).slice(0, 5);
+
+  const kpis = [
+    ['📝', attempts.length, 'Total attempts', '#EEF2FF'],
+    ['🔥', within(7 * DAY).length, 'Attempts this week', '#FFF7ED'],
+    ['🙋', active7, 'Active students (7d)', '#ECFDF3'],
+    ['🎯', `${avgScore}%`, 'Average score', '#ECFEFF'],
+    ['👥', `${engaged}/${students.length}`, 'Students who played', '#FDF4FF'],
+    ['⚡', attempts.reduce((s, a) => s + (a.points || 0), 0), 'Points awarded', '#FEF2F2']
+  ];
+
+  if (!attempts.length) return <EmptyState emoji="📈" title="No data yet" text="Once students start playing, activity trends, per-quiz performance and top performers appear here." />;
+
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      <div className="stats-grid">
+        {kpis.map(k => <div key={k[2]} className="card stat"><span className="ic" style={{ background: k[3] }}>{k[0]}</span><b className="tabular">{k[1]}</b><span>{k[2]}</span></div>)}
+      </div>
+      <div className="card panel">
+        <h3>📅 Activity <span>attempts per day, last 14 days</span></h3>
+        <div className="spark" role="img" aria-label={`Daily attempts: ${days.map(d => `${d.label} ${d.n}`).join(', ')}`}>
+          {days.map(d => (
+            <div key={d.key} className="spark-col" title={`${d.label}: ${d.n}`}>
+              <i style={{ height: `${Math.round((d.n / peak) * 100)}%` }} />
+              <span>{d.label.split(' ')[0]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="dash-grid">
+        <div className="card panel">
+          <h3>📚 By quiz <span>attempts and average score</span></h3>
+          {perQuiz.filter(q => q.n).map(q => (
+            <div key={q.id} className="anl-row">
+              <div className="anl-label">{q.icon} {q.title}</div>
+              <div className="anl-bar"><i style={{ width: `${Math.round((q.n / busiest) * 100)}%` }} /></div>
+              <div className="anl-num tabular">{q.n} · {q.avg}%</div>
+            </div>
+          ))}
+          {!perQuiz.some(q => q.n) && <p style={{ color: 'var(--muted)', fontSize: 13.5 }}>No quiz has been attempted yet.</p>}
+        </div>
+        <div className="card panel">
+          <h3>🏅 Top performers <span>by points earned</span></h3>
+          <div className="recent">
+            {top.length ? top.map((u, i) => (
+              <div key={u.id} className="recent-item">
+                <span className="avatar" style={{ background: u.color }}>{initials(u.name)}</span>
+                <div className="info"><b>{i + 1}. {u.name}</b><span>{u.n} quiz{u.n === 1 ? '' : 'zes'}</span></div>
+                <b className="tabular">{u.pts}</b>
+              </div>
+            )) : <p style={{ color: 'var(--muted)', fontSize: 13.5 }}>Nobody has scored points yet.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Profile: the admin's own account, without leaving the panel ---------- */
+function Profile({ admin, onUpdateName, onUpdatePassword, onToast, onLogout }) {
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      <div className="card acct-hero">
+        <span className="avatar" style={{ background: 'var(--grad-exam)' }}>{initials(admin.name)}</span>
+        <div>
+          <h1 style={{ fontSize: 22 }}>{admin.name}</h1>
+          <div className="meta"><span>{admin.email}</span><span className="chip mixed">Admin</span><span>Since {fmtDate(admin.joined)}</span></div>
+        </div>
+        <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onLogout}>🚪 Log out</button>
+      </div>
+      <div className="acct-grid">
+        <NameForm user={admin} onUpdateName={onUpdateName} onToast={onToast} />
+        <PasswordForm onUpdatePassword={onUpdatePassword} onToast={onToast} />
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Admin shell ---------- */
-export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav }) {
+export default function Admin({ admin, users, attempts, quizzes, byId, addQuestion, removeQuestion, resetQuiz, onToast, onLogin, onNav, onUpdateName, onUpdatePassword, onLogout }) {
   const [tab, setTab] = useState('overview');
   if (!admin || admin.role !== 'admin') {
     return (
@@ -292,7 +463,10 @@ export default function Admin({ admin, users, attempts, quizzes, byId, addQuesti
         </div>
         {tab === 'overview' && <Overview users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
         {tab === 'questions' && <Questions quizzes={quizzes} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={onToast} />}
-        {tab === 'users' && <Users users={users} attempts={attempts} byId={byId} />}
+        {tab === 'attempts' && <Attempts users={users} attempts={attempts} byId={byId} onToast={onToast} />}
+        {tab === 'students' && <Users users={users} attempts={attempts} byId={byId} />}
+        {tab === 'analytics' && <Analytics users={users} attempts={attempts} quizzes={quizzes} byId={byId} />}
+        {tab === 'profile' && <Profile admin={admin} onUpdateName={onUpdateName} onUpdatePassword={onUpdatePassword} onToast={onToast} onLogout={onLogout} />}
         {tab === 'settings' && <Settings admin={admin} users={users} onToast={onToast} onNav={onNav} />}
       </div>
     </main>

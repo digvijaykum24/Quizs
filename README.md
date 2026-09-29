@@ -74,7 +74,7 @@ src/
    ├─ Quiz.jsx           timed quiz engine
    ├─ Result.jsx         score ring, confetti, answer review, share
    ├─ Dashboard.jsx      student dashboard (works for guests too, with a sign-up nudge)
-   ├─ Admin.jsx          admin panel: overview, question manager, user directory, settings
+   ├─ Admin.jsx          admin panel: overview, attempts, questions, students, analytics, profile, settings
    ├─ Account.jsx        account settings: display name, change password, log out
    ├─ Auth.jsx           unified log in / sign up / forgot password (page + modal)
    ├─ Duel.jsx           live 1v1 duel: lobby, waiting room, round, result
@@ -86,6 +86,27 @@ Leaderboard scoring: 10 points per correct answer, +50 when a quiz is finished i
 Anyone can play as a guest — no account needed. Guest scores stay in that browser (`qa_guest_attempts`)
 and are not ranked. When a guest signs up or logs in, their guest scores are uploaded to the account
 automatically, so the leaderboard only ever shows real accounts.
+
+## Admin Dashboard (`#admin`)
+
+```
+LOGIN / SIGN UP  ->  Supabase Auth  ->  check profiles.role (enforced by RLS)
+                                          |
+                        student ----------+---------- admin
+                          |                             |
+                  Student Dashboard              Admin Dashboard
+                    (#dashboard)                   |-- Overview    site totals + recent activity
+                                                   |-- Attempts    every submission, search + CSV export
+                                                   |-- Questions   add / remove / reset per quiz
+                                                   |-- Students    directory with emails and per-student detail
+                                                   |-- Analytics   14-day activity, per-quiz averages, top performers
+                                                   |-- Profile     display name + change password
+                                                   \-- Settings    admin invite code, list of admins
+```
+
+Analytics stands in for a shop's "revenue" board: attempts, weekly activity, active students,
+average score, participation and points awarded. Profile reuses the same two forms as the
+`#account` page, which every student still uses.
 
 ## Live Duel (`#duel`)
 

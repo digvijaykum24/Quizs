@@ -114,7 +114,8 @@ export default function App() {
       {view === 'home' && <Home quizzes={quizzes} byId={byId} attempts={myAttempts} allAttempts={attempts} attemptsLoading={attemptsLoading} users={users} stats={stats} me={me} user={user} guestCount={guestCount} onStart={startQuiz} onPick={openPicker} onNav={navigate} onExplore={explore} onLogin={() => navigate('#login')} onJoin={joinBoard} />}
       {view === 'duel' && ready && <Duel user={user} users={users} quizzes={quizzes} byId={byId} onNav={navigate} onToast={toast} />}
       {view === 'dashboard' && ready && <Dashboard quizzes={quizzes} byId={byId} attempts={myAttempts} stats={stats} me={me} user={user} onStart={startQuiz} onJoin={joinBoard} />}
-      {view === 'admin' && ready && <Admin admin={user} users={users} attempts={attempts} quizzes={quizzes} byId={byId} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={toast} onLogin={() => navigate('#login')} onNav={navigate} />}
+      {view === 'admin' && ready && <Admin admin={user} users={users} attempts={attempts} quizzes={quizzes} byId={byId} addQuestion={addQuestion} removeQuestion={removeQuestion} resetQuiz={resetQuiz} onToast={toast} onLogin={() => navigate('#login')} onNav={navigate}
+        onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onLogout={onLogout} />}
       {(view === 'account' || view === 'login') && ready && (user
         ? <Account user={user} attempts={myAttempts} onUpdateName={updateName} onUpdatePassword={data => backend.auth.updatePassword({ email: user.email, ...data })} onToast={toast} onNav={navigate} onLogout={onLogout} />
         : <AuthPage initialMode="login" reason={view === 'account' ? 'Log in to change your name or password and manage your account.' : ''} onNav={navigate} {...authProps} />)}

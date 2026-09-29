@@ -8,7 +8,7 @@ function strength(p) {
   return [['', 'transparent'], ['Weak', 'var(--bad)'], ['Fair', 'var(--amber)'], ['Good', '#22C55E'], ['Strong', 'var(--ok)'], ['Very strong', 'var(--ok)']][Math.min(5, s)].concat([s / 5]);
 }
 
-function NameForm({ user, onUpdateName, onToast }) {
+export function NameForm({ user, onUpdateName, onToast }) {
   const [name, setName] = useState(user.name); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const dirty = name.trim() !== user.name;
   const submit = async e => {
@@ -27,7 +27,7 @@ function NameForm({ user, onUpdateName, onToast }) {
   );
 }
 
-function PasswordForm({ onUpdatePassword, onToast }) {
+export function PasswordForm({ onUpdatePassword, onToast }) {
   const [f, setF] = useState({ cur: '', p1: '', p2: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const set = k => e => { setF(x => ({ ...x, [k]: e.target.value })); setErr(''); };
   const [label, color, pct] = strength(f.p1);
