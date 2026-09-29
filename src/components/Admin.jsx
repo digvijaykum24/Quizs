@@ -31,8 +31,8 @@ function Overview({ users, attempts, quizzes, byId }) {
             {recent.map((a, i) => { const q = byId(a.quiz); const u = userOf(a.user); if (!q) return null; const p = pctOf(a);
               return (
                 <div key={i} className="recent-item">
-                  <span className="avatar" style={{ background: u?.color || '#64748B' }}>{initials(u?.name || 'Guest')}</span>
-                  <div className="info"><b>{u?.name || 'Guest'} · {q.icon} {q.title}</b><span>{fmtDate(a.date)} · {fmtLong(a.time)}</span></div>
+                  <span className="avatar" style={{ background: u?.color || '#64748B' }}>{initials(u?.name || 'Deleted account')}</span>
+                  <div className="info"><b>{u?.name || 'Deleted account'} · {q.icon} {q.title}</b><span>{fmtDate(a.date)} · {fmtLong(a.time)}</span></div>
                   <div className="sc" style={{ color: p >= 80 ? 'var(--ok)' : p >= 50 ? 'var(--ink)' : 'var(--bad)' }}>{a.score}/{a.total}<small>{p}%</small></div>
                 </div>
               ); })}
@@ -243,7 +243,7 @@ function Attempts({ users, attempts, byId, onToast }) {
   const [q, setQ] = useState('');
   const [quizFilter, setQuizFilter] = useState('all');
   const [limit, setLimit] = useState(25);
-  const nameOf = id => users.find(u => u.id === id)?.name || 'Guest';
+  const nameOf = id => users.find(u => u.id === id)?.name || 'Deleted account';
 
   const rows = useMemo(() => attempts
     .filter(a => quizFilter === 'all' || a.quiz === quizFilter)
