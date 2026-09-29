@@ -187,13 +187,13 @@ function Users({ users, attempts, byId, admin, onSetRole }) {
             <tbody>
               {rows.map(({ u, s }) => (
                 <tr key={u.id} onClick={() => setSel(u)}>
-                  <td><div className="student"><span className="avatar" style={{ background: u.role === 'admin' ? 'var(--grad-exam)' : u.color }}>{initials(u.name)}</span><div style={{ minWidth: 0 }}><b>{u.name}</b><span>{u.email}</span></div></div></td>
-                  <td><span className={`chip ${u.role === 'admin' ? 'mixed' : 'easy'}`}>{u.role}</span></td>
-                  <td>{fmtDate(u.joined)}</td>
-                  <td className="num tabular">{s.n}</td>
-                  <td className="num tabular">{s.n ? `${s.avg}%` : '—'}</td>
-                  <td className="num tabular">{s.n ? `${s.best}%` : '—'}</td>
-                  <td>{s.last ? fmtDate(s.last) : <span style={{ color: 'var(--muted)' }}>Never</span>}</td>
+                  <td data-label="User" className="cell-user"><div className="student"><span className="avatar" style={{ background: u.role === 'admin' ? 'var(--grad-exam)' : u.color }}>{initials(u.name)}</span><div style={{ minWidth: 0 }}><b>{u.name}</b><span>{u.email}</span></div></div></td>
+                  <td data-label="Role"><span className={`chip ${u.role === 'admin' ? 'mixed' : 'easy'}`}>{u.role}</span></td>
+                  <td data-label="Joined">{fmtDate(u.joined)}</td>
+                  <td data-label="Quizzes" className="num tabular">{s.n}</td>
+                  <td data-label="Average" className="num tabular">{s.n ? `${s.avg}%` : '—'}</td>
+                  <td data-label="Best" className="num tabular">{s.n ? `${s.best}%` : '—'}</td>
+                  <td data-label="Last active">{s.last ? fmtDate(s.last) : <span style={{ color: 'var(--muted)' }}>Never</span>}</td>
                   <td>
                     <div className="row-acts">
                       <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setSel(u); }}>View</button>
@@ -273,12 +273,12 @@ function Attempts({ users, attempts, byId, onToast }) {
               <tbody>
                 {rows.slice(0, limit).map(a => (
                   <tr key={a.id}>
-                    <td>{nameOf(a.user)}</td>
-                    <td>{byId(a.quiz)?.title || a.quiz}</td>
-                    <td className="tabular">{a.score}/{a.total}</td>
-                    <td><span className={`chip ${pctOf(a) >= 80 ? 'easy' : pctOf(a) >= 50 ? 'mixed' : 'hard'}`}>{pctOf(a)}%</span></td>
-                    <td className="tabular">{a.points ?? '—'}</td>
-                    <td>{fmtDate(a.date)}</td>
+                    <td data-label="Student"><b className="cell-main">{nameOf(a.user)}</b></td>
+                    <td data-label="Quiz">{byId(a.quiz)?.title || a.quiz}</td>
+                    <td data-label="Score" className="tabular">{a.score}/{a.total}</td>
+                    <td data-label="Percent"><span className={`chip ${pctOf(a) >= 80 ? 'easy' : pctOf(a) >= 50 ? 'mixed' : 'hard'}`}>{pctOf(a)}%</span></td>
+                    <td data-label="Points" className="tabular">{a.points ?? '—'}</td>
+                    <td data-label="When">{fmtDate(a.date)}</td>
                   </tr>
                 ))}
               </tbody>

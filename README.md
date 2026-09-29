@@ -107,6 +107,10 @@ LOGIN / SIGN UP  ->  Supabase Auth  ->  check profiles.role (enforced by RLS)
                                                    \-- Profile     display name + change password
 ```
 
+On phones the panel stays usable: the tab strip scrolls horizontally on its own, the Attempts and
+Students tables become one labelled card per row (no sideways scrolling to read a record), toolbars
+stack, and the KPI grids drop to two columns. Desktop keeps the real tables.
+
 Analytics stands in for a shop's "revenue" board: attempts, weekly activity, active students,
 average score, participation and points awarded. Students shows every account with **Make admin** /
 **Remove admin**. Profile reuses the same two forms as the `#account` page, which students still use.
