@@ -5,7 +5,7 @@ export const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String
 export const fmtLong = s => (s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`);
 export const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
 export const LETTERS = ['A', 'B', 'C', 'D'];
-export const SECTIONS = ['#top', '#quizzes', '#categories', '#leaderboard', '#how'];
+export const SECTIONS = ['#top', '#quizzes', '#categories', '#leaderboard'];
 
 export const CAT_GRADS = {
   Science: 'var(--grad-science)', Mathematics: 'var(--grad-maths)', 'GK Hindi': 'var(--grad-hindi)', English: 'var(--grad-eng)',

@@ -210,25 +210,6 @@ function Leaderboard({ onPick, me, user, allAttempts, loading, users, byId, onLo
 }
 
 /* ---------- How it works ---------- */
-const STEPS = [
-  ['🎯', 'Choose Quiz', 'Select your preferred subject or a full mock test.'],
-  ['⏱', 'Start Test', 'Answer MCQ questions within the time limit.'],
-  ['📊', 'Get Results', 'Instantly see your score, accuracy and performance.'],
-  ['🚀', 'Improve', 'Review incorrect answers and attempt another quiz.']
-];
-function HowItWorks() {
-  return (
-    <section className="section" id="how" style={{ background: 'var(--surface)', borderBlock: '1px solid var(--line)' }}>
-      <div className="container">
-        <div className="section-head center reveal"><div className="eyebrow">How It Works</div><h2>Four steps to a better score</h2></div>
-        <div className="steps">
-          {STEPS.map(([em, t, d], i) => <div key={t} className="card step reveal"><span className="em">{em}</span><div className="num">{i + 1}</div><h3>{t}</h3><p>{d}</p></div>)}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ---------- Home ---------- */
 export default function Home({ quizzes, byId, attempts, allAttempts, attemptsLoading, users, stats, me, user, guestCount, onStart, onPick, onNav, onExplore, onLogin, onJoin }) {
   const live = { students: users.filter(u => u.role === 'student').length, questions: quizzes.reduce((s, q) => s + q.questions.length, 0), subjects: CATEGORIES.length, attempts: allAttempts.length };
@@ -241,7 +222,6 @@ export default function Home({ quizzes, byId, attempts, allAttempts, attemptsLoa
       <Featured quizzes={quizzes} attempts={attempts} allAttempts={allAttempts} onStart={onStart} />
       <Categories quizzes={quizzes} onExplore={onExplore} />
       <Leaderboard onPick={onPick} me={me} user={user} allAttempts={allAttempts} loading={attemptsLoading} users={users} byId={byId} onLogin={onLogin} onJoin={onJoin} guestCount={guestCount} />
-      <HowItWorks />
       <section className="section">
         <div className="container">
           <div className="section-head center reveal"><div className="eyebrow">Achievements</div><h2>Unlock badges as you play</h2><p>Every quiz, streak and perfect score earns you something. Collect them all.</p></div>

@@ -3,7 +3,7 @@ import { Brand, Icon, UserChip } from './ui.jsx';
 
 const LINKS = [
   ['#top', 'Home', '🏠'], ['#quizzes', 'Quizzes', '🎯'], ['#duel', 'Duel', '⚔️'], ['#categories', 'Categories', '📚'],
-  ['#leaderboard', 'Leaderboard', '🏆'], ['#how', 'How It Works', '💡'], ['#dashboard', 'Dashboard', '📊']
+  ['#leaderboard', 'Leaderboard', '🏆'], ['#dashboard', 'Dashboard', '📊']
 ];
 
 /* NavLink: every nav element goes through onNav so section scrolling / page switching is handled in one place */
